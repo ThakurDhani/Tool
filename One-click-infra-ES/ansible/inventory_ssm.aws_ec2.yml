@@ -13,7 +13,6 @@ hostnames:
   - instance_id
 
 compose:
-  ansible_host: public_ip_address
-  
+  ansible_host: instance_id
 
-
+strict: False
