@@ -64,15 +64,16 @@ resource "aws_launch_template" "lt" {
     resource_type = "instance"
     tags = {
       Name = "asg-instance"
+      monitoring = "true"
     }
   }
 }
 
-tag {
-    key                 = "monitoring"
-    value               = "true"
-    propagate_at_launch = true
-  }
+# tag {
+ #   key                 = "monitoring"
+  #  value               = "true"
+   # propagate_at_launch = true
+  #  }
 # -----------------------------------------
 # Auto Scaling Group
 # -----------------------------------------
@@ -103,4 +104,5 @@ resource "aws_autoscaling_group" "asg" {
 
   termination_policies = ["OldestInstance"]
 }
+
 
