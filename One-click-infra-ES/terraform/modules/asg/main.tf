@@ -68,6 +68,11 @@ resource "aws_launch_template" "lt" {
   }
 }
 
+tag {
+    key                 = "monitoring"
+    value               = "true"
+    propagate_at_launch = true
+  }
 # -----------------------------------------
 # Auto Scaling Group
 # -----------------------------------------
@@ -98,3 +103,4 @@ resource "aws_autoscaling_group" "asg" {
 
   termination_policies = ["OldestInstance"]
 }
+
