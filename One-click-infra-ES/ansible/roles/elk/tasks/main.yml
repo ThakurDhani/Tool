@@ -39,9 +39,11 @@
     create: yes
   when: ansible_os_family == "Debian"
 
-- name: Install Elasticsearch package on Debian/Ubuntu
+- name: Install Elasticsearch & Kibana on Debian/Ubuntu
   apt:
-    name: "elasticsearch={{ elasticsearch_version }}"
+    name:
+      - "elasticsearch={{ elasticsearch_version }}"
+      - "kibana={{ kibana_version }}"
     state: present
     update_cache: yes
     allow_downgrade: yes
@@ -49,21 +51,9 @@
     - Start Elasticsearch
     - Enable Elasticsearch
     - Restart Elasticsearch
-  when: ansible_os_family == "Debian"
-
-- name: Configure elasticsearch.yml on Debian/Ubuntu
-  block:
-    - name: Set network.host to 0.0.0.0
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#?network.host:'
-        line: 'network.host: 0.0.0.0'
-
-    - name: Set http.port to 9200
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#?http.port:'
-        line: 'http.port: 9200'
+    - Start Kibana
+    - Enable Kibana
+    - Restart Kibana
   when: ansible_os_family == "Debian"
 
 # ------------------ AMAZON LINUX TASKS ------------------
@@ -97,39 +87,41 @@
       type=rpm-md
   when: ansible_distribution == "Amazon"
 
-- name: Install Elasticsearch on Amazon Linux
+- name: Install Elasticsearch & Kibana on Amazon Linux
   yum:
-    name: elasticsearch
+    name:
+      - elasticsearch
+      - kibana
     state: present
   notify:
     - Start Elasticsearch
     - Enable Elasticsearch
     - Restart Elasticsearch
+    - Start Kibana
+    - Enable Kibana
+    - Restart Kibana
   when: ansible_distribution == "Amazon"
 
-- name: Configure elasticsearch.yml on Amazon Linux
-  block:
-    - name: Set network.host to 0.0.0.0
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#?network.host:'
-        line: 'network.host: 0.0.0.0'
+# ------------------ CONFIGURE elasticsearch.yml ------------------
+- name: Configure elasticsearch.yml
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+  notify: Restart Elasticsearch
 
-    - name: Set http.port to 9200
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#?http.port:'
-        line: 'http.port: 9200'
-  when: ansible_distribution == "Amazon"
-
-# ------------------ KIBANA INSTALLATION (Common) ------------------
+# ------------------ CONFIGURE kibana.yml ------------------
 - name: Configure kibana.yml
   block:
+    - name: Ensure kibana.yml exists
+      file:
+        path: /etc/kibana/kibana.yml
+        state: touch
+
     - name: Set Kibana server.host
       lineinfile:
         path: /etc/kibana/kibana.yml
         regexp: '^#?server.host:'
-        line: 'server.host: "0.0.0.0"'
+        line: 'server.host: "{{ kibana_server_host }}"'
 
     - name: Set Elasticsearch URL
       lineinfile:
@@ -154,3 +146,4 @@
         path: /etc/kibana/kibana.yml
         regexp: '^#?server.ssl.enabled:'
         line: 'server.ssl.enabled: false'
+  notify: Restart Kibana
