@@ -1,24 +1,33 @@
+# roles/elk/handlers/main.yml
 ---
 - name: Start Elasticsearch
-  systemd:
+  service:
     name: elasticsearch
     state: started
     enabled: yes
-    daemon_reload: yes
+
+- name: Enable Elasticsearch
+  service:
+    name: elasticsearch
+    enabled: yes
 
 - name: Restart Elasticsearch
-  systemd:
+  service:
     name: elasticsearch
     state: restarted
 
 - name: Start Kibana
-  systemd:
+  service:
     name: kibana
     state: started
     enabled: yes
-    daemon_reload: yes
+
+- name: Enable Kibana
+  service:
+    name: kibana
+    enabled: yes
 
 - name: Restart Kibana
-  systemd:
+  service:
     name: kibana
     state: restarted
