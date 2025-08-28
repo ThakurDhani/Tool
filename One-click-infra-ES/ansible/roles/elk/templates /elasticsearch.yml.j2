@@ -1,6 +1,13 @@
-cluster.name: my-cluster
-node.name: "{{ ansible_hostname }}"
+cluster.name: {{ elasticsearch_cluster_name | default('my-cluster') }}
+node.name: {{ inventory_hostname }}
+node.roles: {{ elasticsearch_node_roles | default(['master', 'data', 'ingest']) }}
 network.host: 0.0.0.0
 http.port: 9200
-discovery.seed_hosts: ["127.0.0.1"]
-cluster.initial_master_nodes: ["{{ ansible_hostname }}"]
+
+discovery.seed_hosts: {{ elasticsearch_seed_hosts | default(['127.0.0.1']) }}
+cluster.initial_master_nodes: {{ elasticsearch_master_nodes | default([inventory_hostname]) }}
+
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+
+logger.level: {{ elasticsearch_log_level | default('info') }}
