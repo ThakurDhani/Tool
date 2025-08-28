@@ -1,10 +1,9 @@
 ---
 - name: Install Elasticsearch & Kibana on private EC2s via SSM
-  hosts: tag_Name_asg-instance
-  connection: amazon.aws.aws_ssm
-  gather_facts: false
+  hosts: tag_monitoring_true
   become: true
 
   roles:
     - role: elk
+
     
