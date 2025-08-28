@@ -1,7 +1,5 @@
-#SPDX-License-Identifier: MIT-0
 ---
-
-# ------------------ UBUNTU/DEBIAN TASKS ------------------
+# Update and upgrade packages on Debian/Ubuntu
 - name: Update apt repo and cache
   apt:
     update_cache: yes
@@ -9,63 +7,62 @@
     cache_valid_time: 3600
   when: ansible_os_family == "Debian"
 
-- name: Upgrade all packages on servers
+- name: Upgrade all packages on Debian/Ubuntu
   apt:
     upgrade: dist
     force_apt_get: yes
   when: ansible_os_family == "Debian"
 
-- name: Install necessary packages on Debian/Ubuntu
+# Install Java, nginx, wget, vim for Debian/Ubuntu
+- name: Install required packages on Debian/Ubuntu
   apt:
     name:
-      - nginx
       - openjdk-17-jdk
-      - vim
+      - nginx
       - wget
+      - vim
     state: present
   when: ansible_os_family == "Debian"
 
-- name: Import the Elasticsearch PGP key on Debian/Ubuntu
+# Import Elasticsearch GPG key and add repo for Debian/Ubuntu
+- name: Import Elasticsearch GPG key
   apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     keyring: /usr/share/keyrings/elasticsearch-keyring.gpg
     state: present
   when: ansible_os_family == "Debian"
 
-- name: Add the Elasticsearch repository on Debian/Ubuntu
-  lineinfile:
-    path: /etc/apt/sources.list.d/elastic-8.x.list
-    line: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
-    create: yes
+- name: Add Elasticsearch repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
+    filename: elastic-8.x
+    state: present
   when: ansible_os_family == "Debian"
 
+# Install Elasticsearch on Debian/Ubuntu
 - name: Install Elasticsearch package on Debian/Ubuntu
   apt:
-    name: elasticsearch
+    name: elasticsearch={{ elasticsearch_version }}
     state: present
     update_cache: yes
   notify:
-    - Start Elasticsearch
     - Enable Elasticsearch
+    - Start Elasticsearch
+  when: ansible_os_family == "Debian"
+
+# Configure elasticsearch.yml on Debian/Ubuntu from template
+- name: Configure elasticsearch.yml
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0644'
+  notify:
     - Restart Elasticsearch
   when: ansible_os_family == "Debian"
 
-- name: Configure elasticsearch.yml on Debian/Ubuntu
-  block:
-    - name: Set network.host to 0.0.0.0
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#?network.host:'
-        line: 'network.host: 0.0.0.0'
-
-    - name: Set http.port to 9200
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#?http.port:'
-        line: 'http.port: 9200'
-  when: ansible_os_family == "Debian"
-
-# ------------------ AMAZON LINUX TASKS ------------------
+# Amazon Linux setup
 - name: Install dependencies on Amazon Linux
   yum:
     name:
@@ -76,13 +73,13 @@
     state: present
   when: ansible_distribution == "Amazon"
 
-- name: Import the Elasticsearch GPG key on Amazon Linux
+- name: Import Elasticsearch GPG key on Amazon Linux
   rpm_key:
     key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     state: present
   when: ansible_distribution == "Amazon"
 
-- name: Add Elasticsearch repo on Amazon Linux manually
+- name: Add Elasticsearch repo on Amazon Linux
   copy:
     dest: /etc/yum.repos.d/elasticsearch.repo
     content: |
@@ -98,30 +95,48 @@
 
 - name: Install Elasticsearch on Amazon Linux
   yum:
-    name: elasticsearch
+    name: elasticsearch-{{ elasticsearch_version }}
     state: present
   notify:
-    - Start Elasticsearch
     - Enable Elasticsearch
+    - Start Elasticsearch
+  when: ansible_distribution == "Amazon"
+
+- name: Configure elasticsearch.yml on Amazon Linux from template
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0644'
+  notify:
     - Restart Elasticsearch
   when: ansible_distribution == "Amazon"
 
-- name: Configure elasticsearch.yml on Amazon Linux
-  block:
-    - name: Set network.host to 0.0.0.0
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#?network.host:'
-        line: 'network.host: 0.0.0.0'
+# --- Kibana installation and configuration ---
 
-    - name: Set http.port to 9200
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#?http.port:'
-        line: 'http.port: 9200'
+# Install Kibana on Debian/Ubuntu
+- name: Install Kibana package on Debian/Ubuntu
+  apt:
+    name: kibana={{ kibana_version }}
+    state: present
+    update_cache: yes
+  notify:
+    - Enable Kibana
+    - Start Kibana
+  when: ansible_os_family == "Debian"
+
+# Install Kibana on Amazon Linux
+- name: Install Kibana on Amazon Linux
+  yum:
+    name: kibana-{{ kibana_version }}
+    state: present
+  notify:
+    - Enable Kibana
+    - Start Kibana
   when: ansible_distribution == "Amazon"
 
-# ------------------ KIBANA INSTALLATION (Common) ------------------
+# Configure kibana.yml
 - name: Configure kibana.yml
   block:
     - name: Set Kibana server.host
@@ -130,7 +145,7 @@
         regexp: '^#?server.host:'
         line: 'server.host: "0.0.0.0"'
 
-    - name: Set Elasticsearch URL
+    - name: Set Elasticsearch hosts URL
       lineinfile:
         path: /etc/kibana/kibana.yml
         regexp: '^#?elasticsearch.hosts:'
@@ -153,3 +168,5 @@
         path: /etc/kibana/kibana.yml
         regexp: '^#?server.ssl.enabled:'
         line: 'server.ssl.enabled: false'
+  notify:
+    - Restart Kibana
