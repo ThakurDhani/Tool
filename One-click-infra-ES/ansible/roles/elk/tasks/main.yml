@@ -2,6 +2,16 @@
 ---
 # ------------------ UBUNTU/DEBIAN TASKS ------------------
 
+- name: Check available space on /var
+  shell: df --output=avail /var | tail -1
+  register: disk_space_check
+  changed_when: false
+
+- name: Fail if not enough disk space on /var
+  fail:
+    msg: "❌ Not enough disk space on /var. At least 2 GB required."
+  when: disk_space_check.stdout | int < 2097152
+
 - name: Update apt repo and cache
   apt:
     update_cache: yes
@@ -75,6 +85,18 @@
     mode: '0640'
   notify: Restart Elasticsearch
 
+# ------------------ VALIDATE ELASTICSEARCH CONFIG ------------------
+
+- name: Validate Elasticsearch configuration
+  shell: "/usr/share/elasticsearch/bin/elasticsearch -Epath.conf=/etc/elasticsearch -V"
+  register: es_config_check
+  ignore_errors: true
+
+- name: Fail if Elasticsearch config is invalid
+  fail:
+    msg: "❌ Elasticsearch config validation failed: {{ es_config_check.stderr }}"
+  when: es_config_check.rc != 0
+
 # ------------------ START ELASTICSEARCH ------------------
 
 - name: Start Elasticsearch
@@ -82,6 +104,24 @@
     name: elasticsearch
     state: started
     enabled: yes
+  register: es_service
+  ignore_errors: true
+
+- name: Fetch Elasticsearch logs if failed
+  shell: journalctl -xeu elasticsearch.service | tail -n 50
+  when: es_service.failed
+  register: es_logs
+  ignore_errors: true
+
+- name: Display Elasticsearch logs if failed
+  debug:
+    msg: "{{ es_logs.stdout_lines }}"
+  when: es_service.failed
+
+- name: Fail if Elasticsearch service failed to start
+  fail:
+    msg: "❌ Elasticsearch failed to start. Check journalctl logs above."
+  when: es_service.failed
 
 - name: Wait for Elasticsearch to be ready
   wait_for:
