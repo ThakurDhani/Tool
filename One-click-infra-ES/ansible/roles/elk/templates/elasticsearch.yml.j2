@@ -1,17 +1,17 @@
 # roles/elk/templates/elasticsearch.yml.j2
 
-cluster.name: {{ elasticsearch_cluster_name }}
-node.name: {{ elasticsearch_node_name }}
-network.host: {{ elasticsearch_network_host }}
-http.port: {{ elasticsearch_http_port }}
+cluster.name: {{ es_cluster_name }}
+node.name: {{ es_node_name }}
+network.host: {{ es_network_host }}
+http.port: {{ es_http_port }}
 
-discovery.seed_hosts: {{ elasticsearch_discovery_seed_hosts | to_nice_yaml(indent=2) }}
-cluster.initial_master_nodes: {{ elasticsearch_initial_master_nodes | to_nice_yaml(indent=2) }}
+discovery.seed_hosts: {{ es_seed_hosts | to_nice_yaml(indent=2) }}
+cluster.initial_master_nodes: {{ es_master_nodes | to_nice_yaml(indent=2) }}
 
 xpack.security.enabled: true
 xpack.security.transport.ssl.enabled: true
 xpack.security.transport.ssl.verification_mode: certificate
 xpack.security.transport.ssl.keystore.path: /etc/elasticsearch/certs/elastic-certificates.p12
 xpack.security.transport.ssl.truststore.path: /etc/elasticsearch/certs/elastic-certificates.p12
-xpack.security.transport.ssl.keystore.secure_password: {{ elasticsearch_keystore_password }}
-xpack.security.transport.ssl.truststore.secure_password: {{ elasticsearch_truststore_password }}
+xpack.security.transport.ssl.keystore.secure_password: {{ es_keystore_password }}
+xpack.security.transport.ssl.truststore.secure_password: {{ es_truststore_password }}
