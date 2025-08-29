@@ -1,7 +1,7 @@
 # roles/elk/templates/kibana.yml.j2
 
 server.host: {{ kibana_server_host }}
-elasticsearch.hosts: ["http://{{ ansible_host | default('localhost') }}:9200"]
+elasticsearch.hosts: ["http://{{ elasticsearch_host }}:9200"]
 elasticsearch.serviceAccountToken: {{ kibana_service_token }}
 elasticsearch.ssl.verificationMode: none
 server.ssl.enabled: false
