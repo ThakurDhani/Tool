@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT-0
 ---
-
 # ------------------ UBUNTU/DEBIAN TASKS ------------------
 
 - name: Update apt repo and cache
@@ -26,6 +25,8 @@
     state: present
   when: ansible_os_family == "Debian"
 
+# ------------------ ELASTICSEARCH REPO ------------------
+
 - name: Import the Elasticsearch PGP key on Debian/Ubuntu
   apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
@@ -39,6 +40,8 @@
     line: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
     create: yes
   when: ansible_os_family == "Debian"
+
+# ------------------ INSTALL ELASTICSEARCH & KIBANA ------------------
 
 - name: Install Elasticsearch & Kibana
   apt:
@@ -55,7 +58,15 @@
 
 # ------------------ CONFIGURE elasticsearch.yml ------------------
 
-- name: Configure elasticsearch.yml
+- name: Ensure /etc/elasticsearch/certs exists
+  file:
+    path: /etc/elasticsearch/certs
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0750'
+
+- name: Upload elasticsearch.yml
   template:
     src: elasticsearch.yml.j2
     dest: /etc/elasticsearch/elasticsearch.yml
@@ -64,7 +75,7 @@
     mode: '0640'
   notify: Restart Elasticsearch
 
-# ------------------ START ELASTICSEARCH & WAIT ------------------
+# ------------------ START ELASTICSEARCH ------------------
 
 - name: Start Elasticsearch
   service:
@@ -75,7 +86,7 @@
 - name: Wait for Elasticsearch to be ready
   wait_for:
     port: 9200
-    host: "{{ ansible_host }}"
+    host: "{{ ansible_host | default('127.0.0.1') }}"
     delay: 10
     timeout: 60
 
@@ -85,6 +96,7 @@
   command: "/usr/share/elasticsearch/bin/elasticsearch-service-tokens create kibana kibana"
   register: kibana_token_output
   changed_when: false
+  failed_when: kibana_token_output.rc != 0 and 'already exists' not in kibana_token_output.stderr
 
 - name: Set fact for kibana service token
   set_fact:
@@ -92,11 +104,22 @@
 
 # ------------------ CONFIGURE kibana.yml ------------------
 
-- name: Generate kibana.yml from template
+- name: Upload kibana.yml config
   template:
     src: kibana.yml.j2
     dest: /etc/kibana/kibana.yml
+    owner: kibana
+    group: kibana
+    mode: '0640'
   notify:
     - Restart Kibana
     - Enable Kibana
     - Start Kibana
+
+# ------------------ START KIBANA ------------------
+
+- name: Start Kibana
+  service:
+    name: kibana
+    state: started
+    enabled: yes
