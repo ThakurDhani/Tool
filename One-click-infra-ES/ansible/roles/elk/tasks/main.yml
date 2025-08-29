@@ -2,6 +2,7 @@
 ---
 
 # ------------------ UBUNTU/DEBIAN TASKS ------------------
+
 - name: Update apt repo and cache
   apt:
     update_cache: yes
@@ -39,7 +40,7 @@
     create: yes
   when: ansible_os_family == "Debian"
 
-- name: Install Elasticsearch & Kibana on Debian/Ubuntu
+- name: Install Elasticsearch & Kibana
   apt:
     name:
       - "elasticsearch={{ elasticsearch_version }}"
@@ -51,99 +52,48 @@
     - Start Elasticsearch
     - Enable Elasticsearch
     - Restart Elasticsearch
-    - Start Kibana
-    - Enable Kibana
-    - Restart Kibana
-  when: ansible_os_family == "Debian"
-
-# ------------------ AMAZON LINUX TASKS ------------------
-- name: Install dependencies on Amazon Linux
-  yum:
-    name:
-      - java-11-amazon-corretto
-      - nginx
-      - wget
-      - vim
-    state: present
-  when: ansible_distribution == "Amazon"
-
-- name: Import the Elasticsearch GPG key on Amazon Linux
-  rpm_key:
-    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
-    state: present
-  when: ansible_distribution == "Amazon"
-
-- name: Add Elasticsearch repo on Amazon Linux manually
-  copy:
-    dest: /etc/yum.repos.d/elasticsearch.repo
-    content: |
-      [elasticsearch]
-      name=Elasticsearch repository for 8.x packages
-      baseurl=https://artifacts.elastic.co/packages/8.x/yum
-      gpgcheck=1
-      gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
-      enabled=1
-      autorefresh=1
-      type=rpm-md
-  when: ansible_distribution == "Amazon"
-
-- name: Install Elasticsearch & Kibana on Amazon Linux
-  yum:
-    name:
-      - elasticsearch
-      - kibana
-    state: present
-  notify:
-    - Start Elasticsearch
-    - Enable Elasticsearch
-    - Restart Elasticsearch
-    - Start Kibana
-    - Enable Kibana
-    - Restart Kibana
-  when: ansible_distribution == "Amazon"
 
 # ------------------ CONFIGURE elasticsearch.yml ------------------
+
 - name: Configure elasticsearch.yml
   template:
     src: elasticsearch.yml.j2
     dest: /etc/elasticsearch/elasticsearch.yml
   notify: Restart Elasticsearch
 
+# ------------------ START ELASTICSEARCH & WAIT ------------------
+
+- name: Start Elasticsearch
+  service:
+    name: elasticsearch
+    state: started
+    enabled: yes
+
+- name: Wait for Elasticsearch to be ready
+  wait_for:
+    port: 9200
+    host: "{{ ansible_host }}"
+    delay: 10
+    timeout: 60
+
+# ------------------ GENERATE KIBANA TOKEN ------------------
+
+- name: Generate Kibana service account token
+  command: "/usr/share/elasticsearch/bin/elasticsearch-service-tokens create kibana kibana"
+  register: kibana_token_output
+  changed_when: false
+
+- name: Set fact for kibana service token
+  set_fact:
+    kibana_service_token: "{{ kibana_token_output.stdout | trim }}"
+
 # ------------------ CONFIGURE kibana.yml ------------------
-- name: Configure kibana.yml
-  block:
-    - name: Ensure kibana.yml exists
-      file:
-        path: /etc/kibana/kibana.yml
-        state: touch
 
-    - name: Set Kibana server.host
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?server.host:'
-        line: 'server.host: "{{ kibana_server_host }}"'
-
-    - name: Set Elasticsearch URL
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?elasticsearch.hosts:'
-        line: 'elasticsearch.hosts: ["https://{{ ansible_host }}:9200"]'
-
-    - name: Set Elasticsearch service account token
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?elasticsearch.serviceAccountToken:'
-        line: 'elasticsearch.serviceAccountToken: "{{ kibana_service_token }}"'
-
-    - name: Disable SSL verification for Elasticsearch
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?elasticsearch.ssl.verificationMode:'
-        line: 'elasticsearch.ssl.verificationMode: none'
-
-    - name: Disable Kibana SSL
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?server.ssl.enabled:'
-        line: 'server.ssl.enabled: false'
-  notify: Restart Kibana
+- name: Generate kibana.yml from template
+  template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+  notify:
+    - Restart Kibana
+    - Enable Kibana
+    - Start Kibana
