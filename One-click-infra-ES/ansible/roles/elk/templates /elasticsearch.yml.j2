@@ -4,8 +4,8 @@ node.roles: {{ elasticsearch_node_roles | default(['master', 'data', 'ingest']) 
 network.host: 0.0.0.0
 http.port: 9200
 
-discovery.seed_hosts: {{ elasticsearch_seed_hosts | default(['127.0.0.1']) }}
-cluster.initial_master_nodes: {{ elasticsearch_master_nodes | default([inventory_hostname]) }}
+discovery.seed_hosts: {{ elasticsearch_discovery_seed_hosts | default(['127.0.0.1']) }}
+cluster.initial_master_nodes: {{ elasticsearch_initial_master_nodes | default([inventory_hostname]) }}
 
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch
