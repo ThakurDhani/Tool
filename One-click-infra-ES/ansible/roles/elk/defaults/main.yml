@@ -1,4 +1,22 @@
----
+# roles/elk/defaults/main.yml
+
 elasticsearch_version: "8.19.2"
 kibana_version: "8.19.2"
-kibana_service_token: "AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS10b2tlbjpqdUxaNDR0QlJLZTRyRmUtbTlvc3JB"
+
+# Override for flexibility
+elasticsearch_cluster_name: "my-cluster"
+elasticsearch_node_name: "{{ ansible_hostname }}"
+elasticsearch_network_host: "0.0.0.0"
+elasticsearch_http_port: 9200
+elasticsearch_discovery_seed_hosts:
+  - "127.0.0.1"
+elasticsearch_initial_master_nodes:
+  - "{{ ansible_hostname }}"
+
+# Cert passwords (should be vaulted in real environments)
+elasticsearch_keystore_password: "changeme"
+elasticsearch_truststore_password: "changeme"
+
+# Kibana server config
+kibana_server_host: "0.0.0.0"
+kibana_service_token: ""
