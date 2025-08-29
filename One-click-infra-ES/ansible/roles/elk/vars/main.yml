@@ -1,7 +1,7 @@
 # roles/elk/vars/main.yml
 
 # Avoid repeating variables already in defaults unless overriding.
-elasticsearch_keystore_password: "changeme"
-elasticsearch_truststore_password: "changeme"
+#elasticsearch_keystore_password: "changeme"
+#elasticsearch_truststore_password: "changeme"
 
-kibana_service_token: "AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS10b2tlbjpqdUxaNDR0QlJLZTRyRmUtbTlvc3JB"
+#kibana_service_token: "AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS10b2tlbjpqdUxaNDR0QlJLZTRyRmUtbTlvc3JB"
