@@ -1,0 +1,5 @@
+server.host: {{ kibana_server_host }}
+elasticsearch.hosts: ["http://{{ ansible_host }}:9200"]
+elasticsearch.serviceAccountToken: {{ kibana_service_token }}
+elasticsearch.ssl.verificationMode: none
+server.ssl.enabled: false
