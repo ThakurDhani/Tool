@@ -1,6 +1,0 @@
-- name: restart kibana
-  ansible.builtin.systemd:
-    name: kibana
-    state: restarted
-    enabled: true
-    daemon_reload: true
