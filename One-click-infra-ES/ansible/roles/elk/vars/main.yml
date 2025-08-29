@@ -1,31 +1,7 @@
----
-# Elasticsearch version to install
-elasticsearch_version: "8.19.2"
+# roles/elk/vars/main.yml
 
-# Kibana version to install
-kibana_version: "8.19.2"
+# Avoid repeating variables already in defaults unless overriding.
+elasticsearch_keystore_password: "changeme"
+elasticsearch_truststore_password: "changeme"
 
-# Kibana service account token (should be securely stored in Vault or encrypted)
 kibana_service_token: "AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS10b2tlbjpqdUxaNDR0QlJLZTRyRmUtbTlvc3JB"
-
-# Elasticsearch download base URLs (not always needed if using repos, but good to have)
-elasticsearch_apt_repo_url: "https://artifacts.elastic.co/packages/8.x/apt"
-elasticsearch_yum_repo_url: "https://artifacts.elastic.co/packages/8.x/yum"
-
-# Cluster and node names - can be overridden per host if needed
-elasticsearch_cluster_name: "my-cluster"
-elasticsearch_node_name: "{{ ansible_hostname }}"
-
-# Elasticsearch network configuration
-elasticsearch_network_host: "0.0.0.0"
-elasticsearch_http_port: 9200
-
-# Kibana server host configuration
-kibana_server_host: "0.0.0.0"
-
-# Elasticsearch discovery settings
-elasticsearch_discovery_seed_hosts:
-  - "127.0.0.1"
-
-elasticsearch_initial_master_nodes:
-  - "{{ ansible_hostname }}"
