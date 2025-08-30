@@ -1,17 +1,7 @@
-# SPDX-License-Identifier: MIT-0
+#SPDX-License-Identifier: MIT-0
 ---
+
 # ------------------ UBUNTU/DEBIAN TASKS ------------------
-
-- name: Check available space on /var
-  shell: df --output=avail /var | tail -1
-  register: disk_space_check
-  changed_when: false
-
-- name: Fail if not enough disk space on /var
-  fail:
-    msg: "❌ Not enough disk space on /var. At least 2 GB required."
-  when: disk_space_check.stdout | int < 2097152
-
 - name: Update apt repo and cache
   apt:
     update_cache: yes
@@ -35,8 +25,6 @@
     state: present
   when: ansible_os_family == "Debian"
 
-# ------------------ ELASTICSEARCH REPO ------------------
-
 - name: Import the Elasticsearch PGP key on Debian/Ubuntu
   apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
@@ -51,115 +39,117 @@
     create: yes
   when: ansible_os_family == "Debian"
 
-# ------------------ INSTALL ELASTICSEARCH & KIBANA ------------------
-
-- name: Install Elasticsearch & Kibana
+- name: Install Elasticsearch package on Debian/Ubuntu
   apt:
-    name:
-      - "elasticsearch={{ elasticsearch_version }}"
-      - "kibana={{ kibana_version }}"
+    name: elasticsearch
     state: present
     update_cache: yes
-    allow_downgrade: yes
   notify:
     - Start Elasticsearch
     - Enable Elasticsearch
     - Restart Elasticsearch
+  when: ansible_os_family == "Debian"
 
-# ------------------ CONFIGURE elasticsearch.yml ------------------
+- name: Configure elasticsearch.yml on Debian/Ubuntu
+  block:
+    - name: Set network.host to 0.0.0.0
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?network.host:'
+        line: 'network.host: 0.0.0.0'
 
-- name: Ensure /etc/elasticsearch/certs exists
-  file:
-    path: /etc/elasticsearch/certs
-    state: directory
-    owner: elasticsearch
-    group: elasticsearch
-    mode: '0750'
+    - name: Set http.port to 9200
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?http.port:'
+        line: 'http.port: 9200'
+  when: ansible_os_family == "Debian"
 
-- name: Upload elasticsearch.yml
-  template:
-    src: elasticsearch.yml.j2
-    dest: /etc/elasticsearch/elasticsearch.yml
-    owner: elasticsearch
-    group: elasticsearch
-    mode: '0640'
-  notify: Restart Elasticsearch
+# ------------------ AMAZON LINUX TASKS ------------------
+- name: Install dependencies on Amazon Linux
+  yum:
+    name:
+      - java-11-amazon-corretto
+      - nginx
+      - wget
+      - vim
+    state: present
+  when: ansible_distribution == "Amazon"
 
-# ------------------ VALIDATE ELASTICSEARCH CONFIG ------------------
+- name: Import the Elasticsearch GPG key on Amazon Linux
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+  when: ansible_distribution == "Amazon"
 
-- name: Validate Elasticsearch configuration
-  shell: "/usr/share/elasticsearch/bin/elasticsearch -Epath.conf=/etc/elasticsearch -V"
-  register: es_config_check
-  ignore_errors: true
+- name: Add Elasticsearch repo on Amazon Linux manually
+  copy:
+    dest: /etc/yum.repos.d/elasticsearch.repo
+    content: |
+      [elasticsearch]
+      name=Elasticsearch repository for 8.x packages
+      baseurl=https://artifacts.elastic.co/packages/8.x/yum
+      gpgcheck=1
+      gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      enabled=1
+      autorefresh=1
+      type=rpm-md
+  when: ansible_distribution == "Amazon"
 
-- name: Fail if Elasticsearch config is invalid
-  fail:
-    msg: "❌ Elasticsearch config validation failed: {{ es_config_check.stderr }}"
-  when: es_config_check.rc != 0
-
-# ------------------ START ELASTICSEARCH ------------------
-
-- name: Start Elasticsearch
-  service:
+- name: Install Elasticsearch on Amazon Linux
+  yum:
     name: elasticsearch
-    state: started
-    enabled: yes
-  register: es_service
-  ignore_errors: true
-
-- name: Fetch Elasticsearch logs if failed
-  shell: journalctl -xeu elasticsearch.service | tail -n 50
-  when: es_service.failed
-  register: es_logs
-  ignore_errors: true
-
-- name: Display Elasticsearch logs if failed
-  debug:
-    msg: "{{ es_logs.stdout_lines }}"
-  when: es_service.failed
-
-- name: Fail if Elasticsearch service failed to start
-  fail:
-    msg: "❌ Elasticsearch failed to start. Check journalctl logs above."
-  when: es_service.failed
-
-- name: Wait for Elasticsearch to be ready
-  wait_for:
-    port: 9200
-    host: "{{ ansible_host | default('127.0.0.1') }}"
-    delay: 10
-    timeout: 60
-
-# ------------------ GENERATE KIBANA TOKEN ------------------
-
-- name: Generate Kibana service account token
-  command: "/usr/share/elasticsearch/bin/elasticsearch-service-tokens create kibana kibana"
-  register: kibana_token_output
-  changed_when: false
-  failed_when: kibana_token_output.rc != 0 and 'already exists' not in kibana_token_output.stderr
-
-- name: Set fact for kibana service token
-  set_fact:
-    kibana_service_token: "{{ kibana_token_output.stdout | trim }}"
-
-# ------------------ CONFIGURE kibana.yml ------------------
-
-- name: Upload kibana.yml config
-  template:
-    src: kibana.yml.j2
-    dest: /etc/kibana/kibana.yml
-    owner: kibana
-    group: kibana
-    mode: '0640'
+    state: present
   notify:
-    - Restart Kibana
-    - Enable Kibana
-    - Start Kibana
+    - Start Elasticsearch
+    - Enable Elasticsearch
+    - Restart Elasticsearch
+  when: ansible_distribution == "Amazon"
 
-# ------------------ START KIBANA ------------------
+- name: Configure elasticsearch.yml on Amazon Linux
+  block:
+    - name: Set network.host to 0.0.0.0
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?network.host:'
+        line: 'network.host: 0.0.0.0'
 
-- name: Start Kibana
-  service:
-    name: kibana
-    state: started
-    enabled: yes
+    - name: Set http.port to 9200
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?http.port:'
+        line: 'http.port: 9200'
+  when: ansible_distribution == "Amazon"
+
+# ------------------ KIBANA INSTALLATION (Common) ------------------
+- name: Configure kibana.yml
+  block:
+    - name: Set Kibana server.host
+      lineinfile:
+        path: /etc/kibana/kibana.yml
+        regexp: '^#?server.host:'
+        line: 'server.host: "0.0.0.0"'
+
+    - name: Set Elasticsearch URL
+      lineinfile:
+        path: /etc/kibana/kibana.yml
+        regexp: '^#?elasticsearch.hosts:'
+        line: 'elasticsearch.hosts: ["https://{{ ansible_host }}:9200"]'
+
+    - name: Set Elasticsearch service account token
+      lineinfile:
+        path: /etc/kibana/kibana.yml
+        regexp: '^#?elasticsearch.serviceAccountToken:'
+        line: 'elasticsearch.serviceAccountToken: "{{ kibana_service_token }}"'
+
+    - name: Disable SSL verification for Elasticsearch
+      lineinfile:
+        path: /etc/kibana/kibana.yml
+        regexp: '^#?elasticsearch.ssl.verificationMode:'
+        line: 'elasticsearch.ssl.verificationMode: none'
+
+    - name: Disable Kibana SSL
+      lineinfile:
+        path: /etc/kibana/kibana.yml
+        regexp: '^#?server.ssl.enabled:'
+        line: 'server.ssl.enabled: false'
