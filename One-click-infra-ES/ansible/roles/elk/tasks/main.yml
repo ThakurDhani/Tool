@@ -1,6 +1,4 @@
-#SPDX-License-Identifier: MIT-0
 ---
-
 # ------------------ UBUNTU/DEBIAN TASKS ------------------
 - name: Update apt repo and cache
   apt:
@@ -63,6 +61,13 @@
         path: /etc/elasticsearch/elasticsearch.yml
         regexp: '^#?http.port:'
         line: 'http.port: 9200'
+
+    - name: Enable security in elasticsearch.yml
+      blockinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        block: |
+          xpack.security.enabled: true
+          xpack.security.transport.ssl.enabled: true
   when: ansible_os_family == "Debian"
 
 # ------------------ AMAZON LINUX TASKS ------------------
@@ -119,11 +124,16 @@
         path: /etc/elasticsearch/elasticsearch.yml
         regexp: '^#?http.port:'
         line: 'http.port: 9200'
+
+    - name: Enable security in elasticsearch.yml
+      blockinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        block: |
+          xpack.security.enabled: true
+          xpack.security.transport.ssl.enabled: true
   when: ansible_distribution == "Amazon"
 
 # ------------------ KIBANA INSTALLATION (Common) ------------------
-# ------------------ KIBANA INSTALLATION & CONFIG ------------------
-
 - name: Install Kibana on Debian/Ubuntu
   apt:
     name: kibana
@@ -158,3 +168,16 @@
     mode: '0644'
   notify:
     - Restart Kibana
+
+# ------------------ ENSURE SERVICES RUNNING ------------------
+- name: Ensure Elasticsearch service is enabled and running
+  systemd:
+    name: elasticsearch
+    enabled: yes
+    state: started
+
+- name: Ensure Kibana service is enabled and running
+  systemd:
+    name: kibana
+    enabled: yes
+    state: started
