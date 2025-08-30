@@ -1,7 +1,10 @@
-# roles/elk/templates/kibana.yml.j2
-
 server.host: {{ kibana_server_host | default("0.0.0.0") }}
 elasticsearch.hosts: ["http://{{ elasticsearch_host | default(ansible_host) }}:9200"]
+
+# Kibana authentication to Elasticsearch
+elasticsearch.username: "elastic"
+elasticsearch.password: "{{ elasticsearch_password }}"
+
 elasticsearch.serviceAccountToken: {{ kibana_service_token }}
 elasticsearch.ssl.verificationMode: none
 server.ssl.enabled: false
