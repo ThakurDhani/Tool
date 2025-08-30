@@ -1,18 +1,6 @@
-# roles/elk/templates/elasticsearch.yml.j2
-
-cluster.name: {{ es_cluster_name }}
-node.name: {{ es_node_name }}
-network.host: {{ es_network_host }}
-http.port: {{ es_http_port }}
-
-discovery.seed_hosts: {{ es_seed_hosts | to_json }}
-cluster.initial_master_nodes: {{ es_master_nodes | to_json }}
-
-xpack.security.enabled: true
-xpack.security.transport.ssl.enabled: true
-xpack.security.transport.ssl.verification_mode: certificate
-xpack.security.transport.ssl.keystore.path: /etc/elasticsearch/certs/elastic-certificates.p12
-xpack.security.transport.ssl.truststore.path: /etc/elasticsearch/certs/elastic-certificates.p12
-xpack.security.transport.ssl.keystore.secure_password: {{ es_keystore_password }}
-xpack.security.transport.ssl.truststore.secure_password: {{ es_truststore_password }}
-
+cluster.name: my-cluster
+node.name: "{{ ansible_hostname }}"
+network.host: 0.0.0.0
+http.port: 9200
+discovery.seed_hosts: ["127.0.0.1"]
+cluster.initial_master_nodes: ["{{ ansible_hostname }}"]
