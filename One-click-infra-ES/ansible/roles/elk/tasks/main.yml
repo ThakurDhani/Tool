@@ -1,5 +1,4 @@
-# ------------------ UBUNTU/DEBIAN TASKS ------------------
-
+# ------------------ UBUNTU/DEBIAN TASKS ------------------ 
 - name: Update apt repo and cache
   apt:
     update_cache: yes
@@ -54,26 +53,41 @@
   when: ansible_os_family == "Debian"
   become: true
 
-- name: Ensure Elasticsearch config directory exists
-  file:
-    path: /etc/elasticsearch
-    state: directory
-    mode: '0755'
+- name: Configure elasticsearch.yml on Debian/Ubuntu
+  block:
+    - name: Set network.host to 0.0.0.0
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?network.host:'
+        line: 'network.host: 0.0.0.0'
+
+    - name: Set http.port to 9200
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?http.port:'
+        line: 'http.port: 9200'
+
+    - name: Enable security in elasticsearch.yml
+      blockinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        block: |
+          xpack.security.enabled: true
+          xpack.security.transport.ssl.enabled: true
+  when: ansible_os_family == "Debian"
   become: true
 
-- name: Template elasticsearch.yml
-  template:
-    src: elasticsearch.yml.j2
-    dest: /etc/elasticsearch/elasticsearch.yml
-    owner: root
-    group: root
-    mode: '0644'
-  notify:
-    - Restart Elasticsearch
+# ------------------ Fix Elasticsearch Permissions ------------------
+- name: Fix Elasticsearch directory permissions
+  command: sudo chown -R elasticsearch:elasticsearch /var/lib/elasticsearch
   become: true
+  when: ansible_os_family == "Debian"
+
+- name: Fix Elasticsearch log directory permissions
+  command: sudo chown -R elasticsearch:elasticsearch /var/log/elasticsearch
+  become: true
+  when: ansible_os_family == "Debian"
 
 # ------------------ KIBANA INSTALLATION (Common) ------------------
-
 - name: Install Kibana on Debian/Ubuntu
   apt:
     name: kibana
@@ -103,18 +117,19 @@
     - Restart Kibana
   become: true
 
-# ------------------ ENSURE SERVICES RUNNING ------------------
-
-- name: Ensure Elasticsearch service is enabled and running
+# ------------------ ENSURE SERVICES RUNNING ON DEBIAN/UBUNTU ------------------
+- name: Ensure Elasticsearch service is enabled and running on Debian/Ubuntu
   systemd:
     name: elasticsearch
     enabled: yes
     state: started
+  when: ansible_os_family == "Debian"
   become: true
 
-- name: Ensure Kibana service is enabled and running
+- name: Ensure Kibana service is enabled and running on Debian/Ubuntu
   systemd:
     name: kibana
     enabled: yes
     state: started
+  when: ansible_os_family == "Debian"
   become: true
