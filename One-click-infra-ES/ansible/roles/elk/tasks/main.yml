@@ -122,34 +122,39 @@
   when: ansible_distribution == "Amazon"
 
 # ------------------ KIBANA INSTALLATION (Common) ------------------
-- name: Configure kibana.yml
-  block:
-    - name: Set Kibana server.host
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?server.host:'
-        line: 'server.host: "0.0.0.0"'
+# ------------------ KIBANA INSTALLATION & CONFIG ------------------
 
-    - name: Set Elasticsearch URL
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?elasticsearch.hosts:'
-        line: 'elasticsearch.hosts: ["https://{{ ansible_host }}:9200"]'
+- name: Install Kibana on Debian/Ubuntu
+  apt:
+    name: kibana
+    state: present
+    update_cache: yes
+  notify:
+    - Start Kibana
+    - Enable Kibana
+  when: ansible_os_family == "Debian"
 
-    - name: Set Elasticsearch service account token
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?elasticsearch.serviceAccountToken:'
-        line: 'elasticsearch.serviceAccountToken: "{{ kibana_service_token }}"'
+- name: Install Kibana on Amazon Linux
+  yum:
+    name: kibana
+    state: present
+  notify:
+    - Start Kibana
+    - Enable Kibana
+  when: ansible_distribution == "Amazon"
 
-    - name: Disable SSL verification for Elasticsearch
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?elasticsearch.ssl.verificationMode:'
-        line: 'elasticsearch.ssl.verificationMode: none'
+- name: Ensure Kibana config directory exists
+  file:
+    path: /etc/kibana
+    state: directory
+    mode: '0755'
 
-    - name: Disable Kibana SSL
-      lineinfile:
-        path: /etc/kibana/kibana.yml
-        regexp: '^#?server.ssl.enabled:'
-        line: 'server.ssl.enabled: false'
+- name: Template kibana.yml
+  template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart Kibana
