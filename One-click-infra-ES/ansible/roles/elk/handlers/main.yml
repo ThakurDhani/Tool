@@ -1,4 +1,3 @@
-# handlers file for elasticsearch
 ---
 - name: Start Elasticsearch
   systemd:
