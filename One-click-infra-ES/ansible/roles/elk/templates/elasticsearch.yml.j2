@@ -1,15 +1,24 @@
+# Elasticsearch Cluster Configuration
 cluster.name: my-cluster
 node.name: "{{ ansible_hostname }}"
+
+# Data and logs path
 path.data: /var/lib/elasticsearch
 path.logs: /var/log/elasticsearch
 
+# Network and HTTP configuration
 network.host: 0.0.0.0
 http.port: 9200
 
+# Memory settings for JVM (Adjust heap size as per your system resources)
 bootstrap.memory_lock: true
+jvm.options:
+  -Xms4g
+  -Xmx4g
 
+# Single node setup for testing or standalone usage
 discovery.type: single-node
 
-# Security
+# Elasticsearch Security settings
 xpack.security.enabled: true
 xpack.security.transport.ssl.enabled: true
