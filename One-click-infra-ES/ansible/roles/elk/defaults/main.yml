@@ -1,24 +1,4 @@
-# roles/elk/defaults/main.yml
-
+---
 elasticsearch_version: "8.19.2"
-kibana_version: "8.19.2"
-
-# Elasticsearch cluster configuration
-es_cluster_name: "my-cluster"
-es_node_name: "{{ ansible_hostname }}"
-es_network_host: "0.0.0.0"
-es_http_port: 9200
-
-# Discovery settings
-es_seed_hosts:
-  - "127.0.0.1"
-es_master_nodes:
-  - "{{ ansible_hostname }}"
-
-# Certificate passwords (Should be stored securely in production)
-es_keystore_password: "changeme"
-es_truststore_password: "changeme"
-
-# Kibana configuration
-kibana_server_host: "0.0.0.0"
-kibana_service_token: ""  # Will be populated dynamically
+elasticsearch_url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}-amd64.deb"
+kibana_service_token: "AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYS10b2tlbjpqdUxaNDR0QlJLZTRyRmUtbTlvc3JB"
