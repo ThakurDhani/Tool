@@ -1,32 +1,31 @@
+# handlers file for elasticsearch
 ---
 - name: Start Elasticsearch
-  service:
+  systemd:
     name: elasticsearch
     state: started
-    enabled: yes
 
 - name: Enable Elasticsearch
-  service:
+  systemd:
     name: elasticsearch
     enabled: yes
 
 - name: Restart Elasticsearch
-  service:
+  systemd:
     name: elasticsearch
     state: restarted
 
 - name: Start Kibana
-  service:
+  systemd:
     name: kibana
     state: started
-    enabled: yes
 
 - name: Enable Kibana
-  service:
+  systemd:
     name: kibana
     enabled: yes
 
 - name: Restart Kibana
-  service:
+  systemd:
     name: kibana
     state: restarted
