@@ -1,20 +1,20 @@
-# ------------------ UBUNTU/DEBIAN TASKS ------------------ 
+---
+
+# ------------------ DEBIAN FAMILY ------------------
 - name: Update apt repo and cache
   apt:
     update_cache: yes
     force_apt_get: yes
     cache_valid_time: 3600
   when: ansible_os_family == "Debian"
-  become: true
 
-- name: Upgrade all packages on servers
+- name: Upgrade all packages
   apt:
     upgrade: dist
     force_apt_get: yes
   when: ansible_os_family == "Debian"
-  become: true
 
-- name: Install necessary packages on Debian/Ubuntu
+- name: Install packages on Debian
   apt:
     name:
       - nginx
@@ -23,113 +23,222 @@
       - wget
     state: present
   when: ansible_os_family == "Debian"
-  become: true
 
-- name: Import the Elasticsearch PGP key on Debian/Ubuntu
+- name: Import Elasticsearch PGP key (Debian)
   apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     keyring: /usr/share/keyrings/elasticsearch-keyring.gpg
     state: present
   when: ansible_os_family == "Debian"
-  become: true
 
-- name: Add the Elasticsearch repository on Debian/Ubuntu
+- name: Add Elasticsearch repo (Debian)
   lineinfile:
     path: /etc/apt/sources.list.d/elastic-8.x.list
     line: "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
     create: yes
   when: ansible_os_family == "Debian"
-  become: true
 
-- name: Install Elasticsearch package on Debian/Ubuntu
+- name: Install Elasticsearch (Debian)
   apt:
     name: elasticsearch
     state: present
     update_cache: yes
-  notify:
-    - Start Elasticsearch
-    - Enable Elasticsearch
-    - Restart Elasticsearch
   when: ansible_os_family == "Debian"
-  become: true
+  notify:
+    - Enable Elasticsearch
+    - Start Elasticsearch
 
-- name: Configure elasticsearch.yml on Debian/Ubuntu
+- name: Configure elasticsearch.yml (Debian)
   block:
-    - name: Set network.host to 0.0.0.0
+    - name: Set network.host
       lineinfile:
         path: /etc/elasticsearch/elasticsearch.yml
         regexp: '^#?network.host:'
         line: 'network.host: 0.0.0.0'
 
-    - name: Set http.port to 9200
+    - name: Set http.port
       lineinfile:
         path: /etc/elasticsearch/elasticsearch.yml
         regexp: '^#?http.port:'
         line: 'http.port: 9200'
-
-    - name: Enable security in elasticsearch.yml
-      blockinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        block: |
-          xpack.security.enabled: true
-          xpack.security.transport.ssl.enabled: true
   when: ansible_os_family == "Debian"
-  become: true
+  notify: Restart Elasticsearch
 
-# ------------------ Fix Elasticsearch Permissions ------------------
-- name: Fix Elasticsearch directory permissions
-  command: sudo chown -R elasticsearch:elasticsearch /var/lib/elasticsearch
-  become: true
-  when: ansible_os_family == "Debian"
-
-- name: Fix Elasticsearch log directory permissions
-  command: sudo chown -R elasticsearch:elasticsearch /var/log/elasticsearch
-  become: true
-  when: ansible_os_family == "Debian"
-
-# ------------------ KIBANA INSTALLATION (Common) ------------------
-- name: Install Kibana on Debian/Ubuntu
-  apt:
-    name: kibana
+# ------------------ REDHAT FAMILY ------------------
+- name: Install packages on RedHat
+  yum:
+    name:
+      - java-17-openjdk
+      - nginx
+      - wget
+      - vim
     state: present
-    update_cache: yes
+  when: ansible_os_family == "RedHat" and ansible_distribution != "Amazon"
+
+- name: Import Elasticsearch GPG key (RedHat)
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+  when: ansible_os_family == "RedHat" and ansible_distribution != "Amazon"
+
+- name: Add Elasticsearch repo (RedHat)
+  get_url:
+    url: https://artifacts.elastic.co/packages/8.x/yum/elasticsearch.repo
+    dest: /etc/yum.repos.d/elasticsearch.repo
+  when: ansible_os_family == "RedHat" and ansible_distribution != "Amazon"
+
+- name: Install Elasticsearch (RedHat)
+  yum:
+    name: elasticsearch
+    state: present
+  when: ansible_os_family == "RedHat" and ansible_distribution != "Amazon"
   notify:
-    - Start Kibana
-    - Enable Kibana
-  when: ansible_os_family == "Debian"
-  become: true
+    - Enable Elasticsearch
+    - Start Elasticsearch
 
-- name: Ensure Kibana config directory exists
-  file:
-    path: /etc/kibana
-    state: directory
-    mode: '0755'
-  become: true
+- name: Configure elasticsearch.yml (RedHat)
+  block:
+    - name: Set network.host
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?network.host:'
+        line: 'network.host: 0.0.0.0'
 
-- name: Template kibana.yml
+    - name: Set http.port
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?http.port:'
+        line: 'http.port: 9200'
+  when: ansible_os_family == "RedHat" and ansible_distribution != "Amazon"
+  notify: Restart Elasticsearch
+
+# ------------------ AMAZON LINUX ------------------
+- name: Install packages on Amazon Linux
+  yum:
+    name:
+      - java-11-amazon-corretto
+      - nginx
+      - wget
+      - vim
+    state: present
+  when: ansible_distribution == "Amazon"
+
+- name: Import Elasticsearch GPG key (Amazon)
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+  when: ansible_distribution == "Amazon"
+
+- name: Add Elasticsearch repo (Amazon)
+  copy:
+    dest: /etc/yum.repos.d/elasticsearch.repo
+    content: |
+      [elasticsearch]
+      name=Elasticsearch repository for 8.x packages
+      baseurl=https://artifacts.elastic.co/packages/8.x/yum
+      gpgcheck=1
+      gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+      enabled=1
+      autorefresh=1
+      type=rpm-md
+  when: ansible_distribution == "Amazon"
+
+- name: Install Elasticsearch (Amazon)
+  yum:
+    name: elasticsearch
+    state: present
+  when: ansible_distribution == "Amazon"
+  notify:
+    - Enable Elasticsearch
+    - Start Elasticsearch
+
+- name: Configure elasticsearch.yml (Amazon)
+  block:
+    - name: Set network.host
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?network.host:'
+        line: 'network.host: 0.0.0.0'
+
+    - name: Set http.port
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?http.port:'
+        line: 'http.port: 9200'
+  when: ansible_distribution == "Amazon"
+  notify: Restart Elasticsearch
+
+# ------------------ SUSE FAMILY ------------------
+- name: Install packages on SUSE
+  zypper:
+    name:
+      - java-17-openjdk
+      - nginx
+      - wget
+      - vim
+    state: present
+  when: ansible_os_family == "Suse"
+
+- name: Import Elasticsearch GPG key (SUSE)
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+  when: ansible_os_family == "Suse"
+
+- name: Add Elasticsearch repo (SUSE)
+  get_url:
+    url: https://artifacts.elastic.co/packages/8.x/yum/elasticsearch.repo
+    dest: /etc/zypp/repos.d/elasticsearch.repo
+  when: ansible_os_family == "Suse"
+
+- name: Install Elasticsearch (SUSE)
+  zypper:
+    name: elasticsearch
+    state: present
+  when: ansible_os_family == "Suse"
+  notify:
+    - Enable Elasticsearch
+    - Start Elasticsearch
+
+- name: Configure elasticsearch.yml (SUSE)
+  block:
+    - name: Set network.host
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?network.host:'
+        line: 'network.host: 0.0.0.0'
+
+    - name: Set http.port
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#?http.port:'
+        line: 'http.port: 9200'
+  when: ansible_os_family == "Suse"
+  notify: Restart Elasticsearch
+
+# ------------------ KIBANA ------------------
+- name: Configure kibana.yml using template
   template:
     src: kibana.yml.j2
     dest: /etc/kibana/kibana.yml
     owner: root
     group: root
     mode: '0644'
-  notify:
-    - Restart Kibana
-  become: true
+  notify: Restart Kibana
 
-# ------------------ ENSURE SERVICES RUNNING ON DEBIAN/UBUNTU ------------------
-- name: Ensure Elasticsearch service is enabled and running on Debian/Ubuntu
-  systemd:
-    name: elasticsearch
-    enabled: yes
-    state: started
-  when: ansible_os_family == "Debian"
-  become: true
-
-- name: Ensure Kibana service is enabled and running on Debian/Ubuntu
+- name: Restart and enable Kibana service
   systemd:
     name: kibana
-    enabled: yes
-    state: started
-  when: ansible_os_family == "Debian"
-  become: true
+    state: restarted
+    enabled: true
+
+- name: Wait for Kibana to be available
+  uri:
+    url: http://localhost:5601/status
+    status_code: 200
+    timeout: 30
+    validate_certs: no
+  register: kibana_status
+  retries: 5
+  delay: 5
+  until: kibana_status.status == 200
