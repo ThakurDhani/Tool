@@ -1,16 +1,4 @@
-# Kibana Server Settings
-server.host: {{ kibana_server_host | default("0.0.0.0") }}
-
-# Elasticsearch connection details for Kibana
-elasticsearch.hosts: ["http://{{ elasticsearch_host | default(ansible_host) }}:9200"]
-
-# Kibana authentication to Elasticsearch
-elasticsearch.username: "elastic"
-elasticsearch.password: "{{ elasticsearch_password }}"
-
-# Kibana authentication token for service account
-elasticsearch.serviceAccountToken: {{ kibana_service_token }}
-
-# SSL Settings
-elasticsearch.ssl.verificationMode: none
-server.ssl.enabled: false
+# Kibana configuration
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["http://localhost:9200"]
+#logging.dest: "/var/log/kibana/kibana.log"
