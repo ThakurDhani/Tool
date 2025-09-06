@@ -1,3 +1,4 @@
+# handlers file for elasticsearch & kibana
 ---
 - name: Start Elasticsearch
   systemd:
@@ -13,21 +14,18 @@
   systemd:
     name: elasticsearch
     state: restarted
-    enabled: yes
-# handlers file for kibana
 
 - name: Start Kibana
   systemd:
-    name: "{{ kibana_service }}"
+    name: kibana
     state: started
 
 - name: Enable Kibana
   systemd:
-    name: "{{ kibana_service }}"
+    name: kibana
     enabled: yes
 
 - name: Restart Kibana
   systemd:
-    name: "{{ kibana_service }}"
+    name: kibana
     state: restarted
-    enabled: yes
