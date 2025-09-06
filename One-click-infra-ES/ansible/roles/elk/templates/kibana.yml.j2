@@ -1,4 +1,8 @@
-# Kibana configuration
 server.host: "0.0.0.0"
-elasticsearch.hosts: ["http://localhost:9200"]
-#logging.dest: "/var/log/kibana/kibana.log"
+server.port: 5601
+
+# Connect Kibana to Elasticsearch
+elasticsearch.hosts: ["http://{{ ansible_host }}:9200"]
+
+# Optional: disable telemetry
+telemetry.enabled: false
