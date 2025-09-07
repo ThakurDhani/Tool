@@ -13,8 +13,13 @@ variable "key_name" {
   type        = string
 }
 
-variable "target_group_arn" {
-  description = "ARN of the target group for ALB to register EC2 instances"
+variable "es_target_group_arn" {
+  description = "ARN of the Elasticsearch target group"
+  type        = string
+}
+
+variable "kibana_target_group_arn" {
+  description = "ARN of the Kibana target group"
   type        = string
 }
 
