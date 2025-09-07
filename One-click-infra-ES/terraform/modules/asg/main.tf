@@ -63,17 +63,12 @@ resource "aws_launch_template" "lt" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = "asg-instance"
+      Name       = "asg-instance"
       monitoring = "true"
     }
   }
 }
 
-# tag {
- #   key                 = "monitoring"
-  #  value               = "true"
-   # propagate_at_launch = true
-  #  }
 # -----------------------------------------
 # Auto Scaling Group
 # -----------------------------------------
@@ -85,7 +80,12 @@ resource "aws_autoscaling_group" "asg" {
   vpc_zone_identifier       = var.private_subnets
   health_check_type         = "EC2"
   health_check_grace_period = 120
-  target_group_arns         = [var.target_group_arn]
+
+  # ✅ Attach to both Elasticsearch & Kibana TGs
+  target_group_arns = [
+    var.es_target_group_arn,
+    var.kibana_target_group_arn
+  ]
 
   launch_template {
     id      = aws_launch_template.lt.id
@@ -104,5 +104,3 @@ resource "aws_autoscaling_group" "asg" {
 
   termination_policies = ["OldestInstance"]
 }
-
-
