@@ -28,15 +28,18 @@ module "alb" {
 ##############################
 # Auto Scaling Group
 # Launches EC2s in private subnets
-# Target group connects to ALB
+# Target groups connect to ALB
 ##############################
 module "asg" {
   source             = "./modules/asg"
   private_subnets    = module.vpc.private_subnet_ids
-  security_group_ids = [module.sg.private_sg_id] # ✅ renamed from sg_id to match module input
+  security_group_ids = [module.sg.private_sg_id] 
   key_name           = var.key_name
-  target_group_arn   = module.alb.target_group_arn
-  instance_type      = var.instance_type # ✅ added missing required variable
+  instance_type      = var.instance_type
+
+  # Attach to both ALB target groups
+  es_target_group_arn     = module.alb.es_target_group_arn
+  kibana_target_group_arn = module.alb.kibana_target_group_arn
 }
 
 ##############################
