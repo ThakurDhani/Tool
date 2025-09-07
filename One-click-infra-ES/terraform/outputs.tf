@@ -25,3 +25,9 @@ output "asg_name" {
   description = "Name of the Auto Scaling Group"
   value       = module.asg.asg_name
 }
+
+# Bastion Public IP - used by Jenkins to copy SSH key
+output "bastion_public_ip" {
+  description = "Public IP address of the Bastion host"
+  value       = module.bastion.public_ip
+}
