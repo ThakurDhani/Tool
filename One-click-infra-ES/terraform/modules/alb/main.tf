@@ -48,14 +48,16 @@ resource "aws_lb_target_group" "kibana_tg" {
 
   health_check {
     enabled             = true
-    path                = "/"
+    path                = "/api/status"
     port                = "5601"
     protocol            = "HTTP"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
+    matcher             = "200"
   }
+
 
   tags = {
     Name = "KibanaTargetGroup"
@@ -113,3 +115,4 @@ resource "aws_lb_listener_rule" "kibana_rule" {
     }
   }
 }
+
