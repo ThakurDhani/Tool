@@ -1,29 +1,19 @@
 variable "private_subnets" {
-  description = "List of private subnet IDs for the Auto Scaling Group"
+  description = "List of private subnet IDs for the ASG"
   type        = list(string)
 }
 
-variable "security_group_ids" {
-  description = "List of security group IDs for EC2 instances in private subnets"
-  type        = list(string)
+variable "sg_id" {
+  description = "Security group ID for EC2 in private subnets"
+  type        = string
 }
 
 variable "key_name" {
-  description = "Key pair name for SSH access to EC2 instances"
+  description = "Key pair name for SSH access"
   type        = string
 }
 
-variable "es_target_group_arn" {
-  description = "ARN of the Elasticsearch target group"
-  type        = string
-}
-
-variable "kibana_target_group_arn" {
-  description = "ARN of the Kibana target group"
-  type        = string
-}
-
-variable "instance_type" {
-  description = "EC2 instance type for the launch template"
+variable "target_group_arn" {
+  description = "Target group ARN for the ALB"
   type        = string
 }
