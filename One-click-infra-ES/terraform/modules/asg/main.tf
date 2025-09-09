@@ -21,7 +21,8 @@ resource "aws_launch_template" "lt" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = "private-ec2"
+      Name = "asg-instance"
+      monitoring = "true"
     }
   }
 }
@@ -56,3 +57,4 @@ resource "aws_autoscaling_group" "asg" {
 
   termination_policies = ["OldestInstance"]
 }
+
