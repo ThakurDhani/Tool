@@ -3,8 +3,13 @@ variable "private_subnets" {
   type        = list(string)
 }
 
-variable "sg_id" {
-  description = "Security group ID for EC2 in private subnets"
+variable "security_group_ids" {
+  description = "List of security group IDs for EC2 in private subnets"
+  type        = list(string)
+}
+
+variable "instance_type" {
+  description = "EC2 instance type"
   type        = string
 }
 
