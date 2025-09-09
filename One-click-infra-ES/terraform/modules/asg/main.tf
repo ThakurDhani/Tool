@@ -26,6 +26,7 @@ resource "aws_launch_template" "lt" {
       Role       = "monitoring_true"  # Or whatever your group name is
   }
 }
+}
 
 # -----------------------------------------
 # Auto Scaling Group
@@ -57,6 +58,7 @@ resource "aws_autoscaling_group" "asg" {
 
   termination_policies = ["OldestInstance"]
 }
+
 
 
 
