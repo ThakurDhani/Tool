@@ -130,14 +130,6 @@
     - Restart Kibana
   when: ansible_distribution == "Amazon"
 
-- name: Ensure Kibana log directory exists
-  file:
-    path: /var/log/kibana
-    state: directory
-    owner: kibana
-    group: kibana
-    mode: '0755'
-
 - name: Configure kibana.yml from template
   template:
     src: kibana.yml.j2
