@@ -6,10 +6,12 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = [var.sg_id]
 
   tags = {
-    Name       = "bastion"
-    Project    = "prometheus"
+    Name = "Bastion"
+    Project    = "ES-Kibana"
     Monitoring = "false"
-    Role       = "Bastion"   # <-- Added this tag for dynamic Ansible
   }
 }
 
+output "public_ip" {
+  value = aws_instance.bastion.public_ip
+}
