@@ -31,10 +31,10 @@ resource "aws_iam_instance_profile" "ec2_ssm_profile" {
 # -----------------------------------------
 resource "aws_launch_template" "lt" {
   name_prefix            = "private-ec2-"
-  image_id               = "ami-07f07a6e1060cd2a8" # Ubuntu Server 22.04 LTS (ap-south-1)
+  image_id               = "ami-07f07a6e1060cd2a8" # Ubuntu 22.04 LTS (ap-south-1)
   instance_type          = var.instance_type
   key_name               = var.key_name
-  vpc_security_group_ids = var.security_group_ids
+  vpc_security_group_ids = [var.sg_id]
 
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_ssm_profile.name
