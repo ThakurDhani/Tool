@@ -1,26 +1,8 @@
-# ======================== Kibana Configuration ========================
-
-# Server
 server.host: "0.0.0.0"
 server.port: 5601
 
 # Connect Kibana to Elasticsearch
-elasticsearch.hosts: ["http://localhost:9200"]
+elasticsearch.hosts: ["http://{{ ansible_host }}:9200"]
 
-# Disable telemetry (optional)
+# Optional: disable telemetry
 telemetry.enabled: false
-
-# ======================== Security & Encryption ========================
-
-# Encryption keys must be at least 32 characters long
-xpack.security.encryptionKey: "{{ kibana_security_encryption_key | default('change_me_security_key_32chars_minimum') }}"
-xpack.encryptedSavedObjects.encryptionKey: "{{ kibana_savedobjects_encryption_key | default('change_me_savedobjects_key_32chars_minimum') }}"
-xpack.reporting.encryptionKey: "{{ kibana_reporting_encryption_key | default('change_me_reporting_key_32chars_minimum') }}"
-
-# ======================== Logging ========================
-logging.dest: /var/log/kibana/kibana.log
-logging.verbose: false
-
-# ======================== Misc ===========================
-# Ensure plugins don’t break without keys
-xpack.reporting.roles.enabled: false
