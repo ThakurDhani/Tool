@@ -1,12 +1,18 @@
 plugin: amazon.aws.aws_ec2
 regions:
   - ap-south-1
+
+# Connect via private IPs (for internal ASG EC2s)
 hostname_variable: private_ip_address
+
+# Compose extra vars (needed below!)
+compose:
+  ansible_host: private_ip_address
+  public_ip_address: public_ip_address  # <-- Required for Bastion!
+
 keyed_groups:
   - key: tags
     prefix: tag
     separator: "_"
   - key: tags.Role
-    prefix: role_
-
-
+    prefix: role_  # <-- This makes 'Role=Bastion' map to group 'role_Bastion'
