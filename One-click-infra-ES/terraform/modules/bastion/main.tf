@@ -6,7 +6,8 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = [var.sg_id]
 
   tags = {
-    Name = "Bastion"
+    Name = "bastion-host"
+    Role = "Bastion"
     Project    = "ES-Kibana"
     Monitoring = "false"
   }
@@ -15,3 +16,4 @@ resource "aws_instance" "bastion" {
 output "public_ip" {
   value = aws_instance.bastion.public_ip
 }
+
