@@ -3,7 +3,7 @@
 # -----------------------------------------
 resource "aws_launch_template" "lt" {
   name_prefix   = "private-ec2-"
-  image_id      = "ami-0f5ee92e2d63afc18" # Amazon Linux 2 (ap-south-1)
+  image_id      = "ami-07f07a6e1060cd2a8" # Ubuntu, 22.04, amd64 (ap-south-1)
   instance_type = "t3.medium"
   key_name      = var.key_name
 
@@ -57,4 +57,5 @@ resource "aws_autoscaling_group" "asg" {
 
   termination_policies = ["OldestInstance"]
 }
+
 
