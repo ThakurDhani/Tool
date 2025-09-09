@@ -1,13 +1,5 @@
 ---
-# Versions
 elasticsearch_version: "7.17.24"
 elasticsearch_url: "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}-amd64.deb"
-
 kibana_version: "7.17.24"
 kibana_url: "https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-amd64.deb"
-
-# Kibana encryption keys (must be >= 32 chars)
-# These defaults should be overridden in group_vars/all.yml or vaulted secrets
-kibana_security_encryption_key: "change_me_security_key_32chars_minimum"
-kibana_savedobjects_encryption_key: "change_me_savedobjects_key_32chars_minimum"
-kibana_reporting_encryption_key: "change_me_reporting_key_32chars_minimum"
