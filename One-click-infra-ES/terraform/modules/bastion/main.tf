@@ -9,11 +9,12 @@ resource "aws_instance" "bastion" {
     Name = "bastion-host"
     Role = "Bastion"
     Project    = "ES-Kibana"
-    Monitoring = "false"
+    monitoring = "false"
   }
 }
 
 output "public_ip" {
   value = aws_instance.bastion.public_ip
 }
+
 
